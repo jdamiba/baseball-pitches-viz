@@ -439,9 +439,10 @@ fig2 = {
 }
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
 
 app.layout = html.Div(children=[
-    dcc.Markdown(children='## insidetextorientation and legend.title'),
+    dcc.Markdown(children='## This Dash app demonstrates the use of the `insidetextorientation` and `legend.title` attributes when creating charts.'),
     dcc.Markdown(children='### [Codepen #1](https://codepen.io/MojtabaSamimi/pen/zYxBLJe)'),
     dcc.Markdown(children='### [Codepen #2](https://codepen.io/MojtabaSamimi/pen/MWYpooK)'),
     dcc.Markdown(children='### [GitHub PR](https://github.com/plotly/plotly.js/pull/4420)'),
