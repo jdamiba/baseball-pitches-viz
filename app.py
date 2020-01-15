@@ -47,16 +47,6 @@ app.layout = html.Div(
             initial_visible_month=dt(2019, 3, 20),
         ),
         html.Br(),
-        dcc.Markdown(children="#### Away Team"),
-        dcc.Dropdown(
-            id="dropdown",
-            options=[
-                {"label": "Chicago Cubs", "value": "CHC"},
-                {"label": "Tampa Bay Rays", "value": "TB"},
-                {"label": "Seattle Seahawks", "value": "SEA"},
-            ],
-            value=""
-        ),
         html.Button(
             "Get Statistics!", id="button", className="btn btn-primary mt-3 mb-3"
         ),
@@ -77,7 +67,6 @@ app.layout = html.Div(
         Input("button", "n_clicks"),
         Input("date-picker", "start_date"),
         Input("date-picker", "end_date"),
-        Input("dropdown", "value"),
     ],
     [
         State(component_id="first-name", component_property="value"),
