@@ -73,7 +73,7 @@ app.layout = html.Div(
         State(component_id="last-name", component_property="value"),
     ],
 )
-def update_output_div(n_clicks, start_date, end_date, value, first_name, last_name):
+def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
     # only update on increment
     prev_clicks = 0
     if n_clicks is None or n_clicks == prev_clicks:
@@ -83,7 +83,6 @@ def update_output_div(n_clicks, start_date, end_date, value, first_name, last_na
         or end_date is None
         or first_name is None
         or last_name is None
-        or value is None
     ):
         raise PreventUpdate
     else:
