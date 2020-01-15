@@ -108,7 +108,7 @@ def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
         )
         
         text = f"""
-        Gathered {len(data)} pitches by {first_name} {last_name} in the database for the time period between {start_date} and {end_date}.   
+        Gathered {len(data)} pitches with descriptions for {first_name} {last_name} in the database for the time period between {start_date} and {end_date}.   
         Strikes: {len(strikes)}  
         Balls: {len(balls)}  
         Foul: {len(foul)}
@@ -134,7 +134,7 @@ def get_data(first_name, last_name, start_date, end_date):
         ["pitch_number"]
     )  # sort pitches by order thrown, earliest first
     data = data.dropna(
-        subset=["pitch_type", "description"]
+        subset=["pitch_type", "des", "description"]
     )  # make sure dataset does not contain nulls
 
     data["order"] = data.reset_index().index  # create new column with pitch order
