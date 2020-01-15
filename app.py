@@ -5,8 +5,8 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import pybaseball as pb
 import plotly.express as px
-from datetime import datetime as dt
 import pandas as pd
+from datetime import datetime as dt
 
 external_stylesheets = [
     "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
@@ -18,13 +18,13 @@ server = app.server
 
 intro = dcc.Markdown(
     children="""
-  # 2019 MLB Pitcher Statistics Dashboard
+  # MLB Pitcher Scouting Report
   
-  In the input boxes below, type the first and last name of a Major League Baseball pitcher who played in 2019.
-  
-  Also, enter a date range in the 2019 baseball season (3/20/19 - 9/29/19). 
+  Enter the name of a Major League Baseball pitcher who played and a date range in the 2019 baseball season (3/20/19 - 9/29/19). 
   
   Then, click Get Statistics!
+  
+  Hover over a point to see more information that particular pitch.
   
   #### First Name
   """
@@ -47,6 +47,16 @@ app.layout = html.Div(
             initial_visible_month=dt(2019, 3, 20),
         ),
         html.Br(),
+        dcc.Markdown(children="#### Away Team"),
+        dcc.Dropdown(
+            id="dropdown",
+            options=[
+                {"label": "Chicago Cubs", "value": "CHC"},
+                {"label": "Tampa Bay Rays", "value": "TB"},
+                {"label": "Seattle Seahawks", "value": "SEA"},
+            ],
+            value=""
+        ),
         html.Button(
             "Get Statistics!", id="button", className="btn btn-primary mt-3 mb-3"
         ),
@@ -67,33 +77,43 @@ app.layout = html.Div(
         Input("button", "n_clicks"),
         Input("date-picker", "start_date"),
         Input("date-picker", "end_date"),
+        Input("dropdown", "value"),
     ],
     [
         State(component_id="first-name", component_property="value"),
         State(component_id="last-name", component_property="value"),
     ],
 )
-def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
+def update_output_div(n_clicks, start_date, end_date, value, first_name, last_name):
     # only update on increment
     prev_clicks = 0
     if n_clicks is None or n_clicks == prev_clicks:
         raise PreventUpdate
-    elif start_date is None or end_date is None:
+    elif (
+        start_date is None
+        or end_date is None
+        or first_name is None
+        or last_name is None
+        or value is None
+    ):
         raise PreventUpdate
-        raise Exception("Date cannot be empty")
     else:
-
         data = get_data(first_name, last_name, start_date, end_date)
-        strikes = [i for i in data['description'] if i == "called_strike" or i == "swinging_strike" ]
-        balls = [i for i in data['description'] if i == "ball"]
-        foul = [i for i in data['description'] if i == "foul"]
-    
+        strikes = [
+            i
+            for i in data["Result of Pitch"]
+            if i == "called_strike" or i == "swinging_strike"
+        ]
+        balls = [i for i in data["Result of Pitch"] if i == "ball"]
+        foul = [i for i in data["Result of Pitch"] if i == "foul"]
+        print(value)
+
         pitch_type_scatter = px.scatter(
             data,
             x="order",
             y="release_speed",
             color="pitch_name",
-            hover_data=["des", "description"],
+            hover_data=["Result of Pitch", "Play by Play"],
             trendline="lowess",
             title=f"Scatter Plot of {first_name} {last_name}'s Pitch Release Speed Between {start_date} and {end_date}",
         )
@@ -106,7 +126,7 @@ def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
             points="all",
             title=f"Box Plot of {first_name} {last_name}'s Pitch Release Speed Between {start_date} and {end_date}",
         )
-        
+
         text = f"""
         Gathered {len(data)} pitches with descriptions for {first_name} {last_name} in the database for the time period between {start_date} and {end_date}.   
         Strikes: {len(strikes)}  
@@ -138,9 +158,11 @@ def get_data(first_name, last_name, start_date, end_date):
     )  # make sure dataset does not contain nulls
 
     data["order"] = data.reset_index().index  # create new column with pitch order
-    
+
     df = pd.DataFrame(data)
-    
+
+    df = df.rename({"des": "Play by Play", "description": "Result of Pitch"}, axis=1)
+
     return df
 
 
