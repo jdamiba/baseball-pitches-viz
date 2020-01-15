@@ -87,6 +87,7 @@ def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
         raise PreventUpdate
     else:
         data = get_data(first_name, last_name, start_date, end_date)
+        
         strikes = [
             i
             for i in data["Result of Pitch"]
@@ -94,25 +95,25 @@ def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
         ]
         balls = [i for i in data["Result of Pitch"] if i == "ball"]
         foul = [i for i in data["Result of Pitch"] if i == "foul"]
-        print(value)
 
         pitch_type_scatter = px.scatter(
             data,
-            x="order",
-            y="release_speed",
-            color="pitch_name",
+            x="Pitch Number",
+            y="Pitch Speed",
+            color="Pitch Type",
             hover_data=["Result of Pitch", "Play by Play"],
             trendline="lowess",
-            title=f"Scatter Plot of {first_name} {last_name}'s Pitch Release Speed Between {start_date} and {end_date}",
+            title=f"Scatter Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
         )
 
         pitch_type_box = px.box(
             data,
-            x="pitch_name",
-            y="release_speed",
-            color="pitch_name",
+            x="Pitch Type",
+            y="Pitch Speed",
+            color="Pitch Type",
             points="all",
-            title=f"Box Plot of {first_name} {last_name}'s Pitch Release Speed Between {start_date} and {end_date}",
+            hover_data=["Result of Pitch", "Play by Play"],
+            title=f"Box Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
         )
 
         text = f"""
@@ -149,7 +150,7 @@ def get_data(first_name, last_name, start_date, end_date):
 
     df = pd.DataFrame(data)
 
-    df = df.rename({"des": "Play by Play", "description": "Result of Pitch"}, axis=1)
+    df = df.rename({"des": "Play by Play", "description": "Result of Pitch", "order": "Pitch Number", "pitch_name": "Pitch Type", "release_speed": "Pitch Speed"}, axis=1)
 
     return df
 
