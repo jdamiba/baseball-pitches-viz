@@ -186,7 +186,7 @@ def update_output_div(
 
         prev_clicks = prev_clicks + 1
 
-        return pitch_type_bar, pitch_type_scatter, pitch_type_box, table
+        return pitch_type_bar, pitch_type_scatter, pitch_type_box
 
 
 def get_data(first_name, last_name, start_date, end_date):
