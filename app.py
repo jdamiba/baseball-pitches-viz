@@ -1,16 +1,13 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State
-from dash.exceptions import PreventUpdate
 import pybaseball as pb
 import plotly.express as px
 import pandas as pd
-from datetime import datetime as dt
-import dash_table
 
-pd.options.display.max_rows = 10
-pd.options.display.max_columns = 10
+from datetime import datetime as dt
+from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
 
 external_stylesheets = [
     "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
@@ -106,13 +103,7 @@ app.layout = html.Div(
     ],
 )
 def update_output_div(
-    n_clicks,
-    start_date,
-    end_date,
-    infield_fielding_alignment,
-    outfield_fielding_alignment,
-    first_name,
-    last_name,
+    n_clicks, start_date, end_date, infield, outfield, first_name, last_name,
 ):
     # only update on increment
     prev_clicks = 0
@@ -123,15 +114,15 @@ def update_output_div(
         or first_name is None
         or last_name is None
         or n_clicks == prev_clicks
-        or infield_fielding_alignment is None
-        or outfield_fielding_alignment is None
+        or infield is None
+        or outfield is None
     ):
         raise PreventUpdate
     else:
         data = get_data(first_name, last_name, start_date, end_date)
 
-        data = data[data["if_fielding_alignment"] == infield_fielding_alignment]
-        data = data[data["of_fielding_alignment"] == outfield_fielding_alignment]
+        data = data[data["if_fielding_alignment"] == infield]
+        data = data[data["of_fielding_alignment"] == outfield]
 
         strikes = [
             i
