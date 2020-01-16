@@ -75,7 +75,6 @@ app.layout = html.Div(
                     id="button",
                     className="btn btn-primary mt-3 mb-3",
                 ),
-                dcc.Loading(children=dcc.Graph(id="pitch-type-bar")),
                 dcc.Loading(children=dcc.Graph(id="pitch-type-scatter")),
                 dcc.Loading(children=dcc.Graph(id="pitch-type-box")),
             ],
@@ -86,7 +85,6 @@ app.layout = html.Div(
 
 @app.callback(
     [
-        Output(component_id="pitch-type-bar", component_property="figure"),
         Output(component_id="pitch-type-scatter", component_property="figure"),
         Output(component_id="pitch-type-box", component_property="figure"),
     ],
@@ -139,22 +137,6 @@ def update_output_div(
         SL = len(data[data["Pitch Type"] == "Slider"])
         FT = len(data[data["Pitch Type"] == "2-Seam Fastball"])
 
-        pitch_type_bar = px.bar(
-            y=[FF, CU, KC, CH, SL, FT],
-            x=[
-                "4-Seam Fastball",
-                "Curveball",
-                "Knuckle Curve",
-                "Changeup",
-                "Slider",
-                "2-Seam Fastball",
-            ],
-        )
-
-        pitch_type_bar.update_layout(
-            yaxis_title="Total Pitches", xaxis_title="Pitch Type",
-        )
-
         pitch_type_scatter = px.scatter(
             data,
             x="Pitch Number",
@@ -177,7 +159,7 @@ def update_output_div(
 
         prev_clicks = prev_clicks + 1
 
-        return pitch_type_bar, pitch_type_scatter, pitch_type_box
+        return pitch_type_scatter, pitch_type_box
 
 
 def get_data(first_name, last_name, start_date, end_date):
