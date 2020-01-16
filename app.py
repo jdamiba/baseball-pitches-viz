@@ -7,87 +7,132 @@ import pybaseball as pb
 import plotly.express as px
 import pandas as pd
 from datetime import datetime as dt
+import dash_table
+
+pd.options.display.max_rows = 10
+pd.options.display.max_columns = 10
 
 external_stylesheets = [
     "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
 ]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app.title = "Baseball Pitches Visualizer"
+app.title = "MLB Pitcher Scouting Report"
 server = app.server
 
-intro = dcc.Markdown(
-    children="""
-  # MLB Pitcher Scouting Report
-  
-  Enter the name of a Major League Baseball pitcher who played and a date range in the 2019 baseball season (3/20/19 - 9/29/19). 
-  
-  Then, click Get Statistics!
-  
-  Hover over a point to see more information that particular pitch.
-  
-  #### First Name
-  """
-)
-
 app.layout = html.Div(
-    className="mt-1 mr-5 ml-5",
     children=[
-        intro,
-        dcc.Input(className="mb-3", id="first-name", value="Gerrit", type="text"),
-        dcc.Markdown(children="#### Last Name"),
-        dcc.Input(id="last-name", value="Cole", type="text"),
-        html.Br(),
-        html.Br(),
-        dcc.Markdown(children="#### Date Range"),
-        dcc.DatePickerRange(
-            id="date-picker",
-            min_date_allowed=dt(2019, 3, 20),
-            max_date_allowed=dt(2019, 9, 29),
-            initial_visible_month=dt(2019, 3, 20),
+        html.Nav(
+            className="navbar",
+            children=[
+                html.H1(
+                    children=[
+                        html.A(
+                            className="navbar-brand",
+                            children="MLB Pitcher Scouting Report",
+                            href="/",
+                        )
+                    ]
+                )
+            ],
         ),
-        html.Br(),
-        html.Button(
-            "Get Statistics!", id="button", className="btn btn-primary mt-3 mb-3"
+        html.Div(
+            className="mr-5 ml-5 mt-0 pt-2 jumbotron",
+            children=[
+                dcc.Markdown("#### First Name"),
+                dcc.Input(
+                    className="mb-3", id="first-name", value="Gerrit", type="text"
+                ),
+                dcc.Markdown("#### Last Name"),
+                dcc.Input(className="mb-3", id="last-name", value="Cole", type="text"),
+                dcc.Markdown("#### Date Range"),
+                dcc.DatePickerRange(
+                    className="mb-3",
+                    id="date-picker",
+                    min_date_allowed=dt(2019, 3, 20),
+                    max_date_allowed=dt(2019, 9, 29),
+                    initial_visible_month=dt(2019, 3, 20),
+                ),
+                dcc.Markdown("#### Infield Fielding Alignment"),
+                dcc.Dropdown(
+                    className="mb-3 w-25",
+                    id="infield-dropdown",
+                    options=[
+                        {"label": "Standard", "value": "Standard"},
+                        {"label": "Shift", "value": "Infield shift"},
+                    ],
+                    value="Standard",
+                ),
+                dcc.Markdown("#### Outfield Fielding Alignment"),
+                dcc.Dropdown(
+                    className="w-25",
+                    id="outfield-dropdown",
+                    options=[
+                        {"label": "Standard", "value": "Standard"},
+                        {"label": "Strategic", "value": "Strategic"},
+                    ],
+                    value="Standard",
+                ),
+                html.Button(
+                    "Create Data Visualizations!",
+                    id="button",
+                    className="btn btn-primary mt-3 mb-3",
+                ),
+                dcc.Loading(children=dcc.Graph(id="pitch-type-bar")),
+                dcc.Loading(children=dcc.Graph(id="pitch-type-scatter")),
+                dcc.Loading(children=dcc.Graph(id="pitch-type-box")),
+            ],
         ),
-        dcc.Markdown(id="text-box"),
-        dcc.Loading(children=dcc.Graph(id="pitch-type-scatter")),
-        dcc.Loading(children=dcc.Graph(id="pitch-type-box")),
     ],
 )
 
 
 @app.callback(
     [
+        Output(component_id="pitch-type-bar", component_property="figure"),
         Output(component_id="pitch-type-scatter", component_property="figure"),
         Output(component_id="pitch-type-box", component_property="figure"),
-        Output(component_id="text-box", component_property="children"),
     ],
     [
         Input("button", "n_clicks"),
         Input("date-picker", "start_date"),
         Input("date-picker", "end_date"),
+        Input("infield-dropdown", "value"),
+        Input("outfield-dropdown", "value"),
     ],
     [
         State(component_id="first-name", component_property="value"),
         State(component_id="last-name", component_property="value"),
     ],
 )
-def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
+def update_output_div(
+    n_clicks,
+    start_date,
+    end_date,
+    infield_fielding_alignment,
+    outfield_fielding_alignment,
+    first_name,
+    last_name,
+):
     # only update on increment
     prev_clicks = 0
-    if n_clicks is None or n_clicks == prev_clicks:
-        raise PreventUpdate
-    elif (
+    if (
         start_date is None
+        or n_clicks is None
         or end_date is None
         or first_name is None
         or last_name is None
+        or n_clicks == prev_clicks
+        or infield_fielding_alignment is None
+        or outfield_fielding_alignment is None
     ):
         raise PreventUpdate
     else:
         data = get_data(first_name, last_name, start_date, end_date)
-        
+
+        data = data[data["if_fielding_alignment"] == infield_fielding_alignment]
+        data = data[data["of_fielding_alignment"] == outfield_fielding_alignment]
+
         strikes = [
             i
             for i in data["Result of Pitch"]
@@ -96,13 +141,36 @@ def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
         balls = [i for i in data["Result of Pitch"] if i == "ball"]
         foul = [i for i in data["Result of Pitch"] if i == "foul"]
 
+        FF = len(data[data["Pitch Type"] == "4-Seam Fastball"])
+        KC = len(data[data["Pitch Type"] == "Knuckle Curve"])
+        CU = len(data[data["Pitch Type"] == "Curveball"])
+        CH = len(data[data["Pitch Type"] == "Changeup"])
+        SL = len(data[data["Pitch Type"] == "Slider"])
+        FT = len(data[data["Pitch Type"] == "2-Seam Fastball"])
+
+        pitch_type_bar = px.bar(
+            y=[FF, CU, KC, CH, SL, FT],
+            x=[
+                "4-Seam Fastball",
+                "Curveball",
+                "Knuckle Curve",
+                "Changeup",
+                "Slider",
+                "2-Seam Fastball",
+            ],
+        )
+
+        pitch_type_bar.update_layout(
+            yaxis_title="Total Pitches", xaxis_title="Pitch Type",
+        )
+
         pitch_type_scatter = px.scatter(
             data,
             x="Pitch Number",
             y="Pitch Speed",
             color="Pitch Type",
             hover_data=["Result of Pitch", "Play by Play"],
-            trendline="lowess",
+            trendline="ols",
             title=f"Scatter Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
         )
 
@@ -116,16 +184,9 @@ def update_output_div(n_clicks, start_date, end_date, first_name, last_name):
             title=f"Box Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
         )
 
-        text = f"""
-        Gathered {len(data)} pitches with descriptions for {first_name} {last_name} in the database for the time period between {start_date} and {end_date}.   
-        Strikes: {len(strikes)}  
-        Balls: {len(balls)}  
-        Foul: {len(foul)}
-        """
-
         prev_clicks = prev_clicks + 1
 
-        return pitch_type_scatter, pitch_type_box, text
+        return pitch_type_bar, pitch_type_scatter, pitch_type_box, table
 
 
 def get_data(first_name, last_name, start_date, end_date):
@@ -150,7 +211,16 @@ def get_data(first_name, last_name, start_date, end_date):
 
     df = pd.DataFrame(data)
 
-    df = df.rename({"des": "Play by Play", "description": "Result of Pitch", "order": "Pitch Number", "pitch_name": "Pitch Type", "release_speed": "Pitch Speed"}, axis=1)
+    df = df.rename(
+        {
+            "des": "Play by Play",
+            "description": "Result of Pitch",
+            "order": "Pitch Number",
+            "pitch_name": "Pitch Type",
+            "release_speed": "Pitch Speed",
+        },
+        axis=1,
+    )
 
     return df
 
