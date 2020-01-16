@@ -75,19 +75,15 @@ app.layout = html.Div(
                     id="button",
                     className="btn btn-primary mt-3 mb-3",
                 ),
-                dcc.Loading(children=dcc.Graph(id="pitch-type-scatter")),
-                dcc.Loading(children=dcc.Graph(id="pitch-type-box")),
             ],
         ),
+        html.Div(id="graph-div"),
     ],
 )
 
 
 @app.callback(
-    [
-        Output(component_id="pitch-type-scatter", component_property="figure"),
-        Output(component_id="pitch-type-box", component_property="figure"),
-    ],
+    Output(component_id="graph-div", component_property="children"),
     [
         Input("button", "n_clicks"),
         Input("date-picker", "start_date"),
@@ -137,14 +133,47 @@ def update_output_div(
         SL = len(data[data["Pitch Type"] == "Slider"])
         FT = len(data[data["Pitch Type"] == "2-Seam Fastball"])
 
+        pitch_type_bar = px.bar(
+            y=[FF, KC, CU, CH, SL, FT],
+            x=[
+                "4-Seam Fastball",
+                "Knuckle Curve",
+                "Curveball",
+                "Changeup",
+                "Slider",
+                "2-Seam Fastball",
+            ],
+            title=f"Bar Chart of {first_name} {last_name}'s Pitch Selection Between {start_date} and {end_date}",
+            template="plotly_dark"
+        ).update_layout(xaxis_title="Pitch Type", yaxis_title="Count")
+
+        pitch_type_pie = (
+            px.pie(
+                values=[FF, KC, CU, CH, SL, FT],
+                names=[
+                    "4-Seam Fastball",
+                    "Knuckle Curve",
+                    "Curveball",
+                    "Changeup",
+                    "Slider",
+                    "2-Seam Fastball",
+                ],
+                title=f"Pie Chart of {first_name} {last_name}'s Pitch Selection Between {start_date} and {end_date}",
+                template="plotly_dark"
+            )
+            .update_traces(textinfo="percent+label", insidetextorientation="tangential")
+            .update_layout(legend_title="Pitch Type")
+        )
+
         pitch_type_scatter = px.scatter(
             data,
             x="Pitch Number",
             y="Pitch Speed",
             color="Pitch Type",
-            hover_data=["Result of Pitch", "Play by Play"],
             trendline="ols",
-            title=f"Scatter Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
+            hover_data=["Result of Pitch", "Play by Play"],
+            title=f"3D Scatter Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
+            template="plotly_dark"
         )
 
         pitch_type_box = px.box(
@@ -155,11 +184,17 @@ def update_output_div(
             points="all",
             hover_data=["Result of Pitch", "Play by Play"],
             title=f"Box Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
-        )
+            template="plotly_dark"
+        ).update_traces(quartilemethod="exclusive")
 
         prev_clicks = prev_clicks + 1
 
-        return pitch_type_scatter, pitch_type_box
+        return [
+            dcc.Graph(figure=pitch_type_pie),
+            dcc.Graph(figure=pitch_type_bar),
+            dcc.Graph(figure=pitch_type_scatter),
+            dcc.Graph(figure=pitch_type_box),
+        ]
 
 
 def get_data(first_name, last_name, start_date, end_date):
@@ -177,7 +212,7 @@ def get_data(first_name, last_name, start_date, end_date):
         ["pitch_number"]
     )  # sort pitches by order thrown, earliest first
     data = data.dropna(
-        subset=["pitch_type", "des", "description"]
+        subset=["pitch_type", "des", "description", "release_spin_rate"]
     )  # make sure dataset does not contain nulls
 
     data["order"] = data.reset_index().index  # create new column with pitch order
