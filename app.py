@@ -161,8 +161,7 @@ def update_output_div(
                 title=f"Pie Chart of {first_name} {last_name}'s Pitch Selection Between {start_date} and {end_date}",
                 template="plotly_dark"
             )
-            .update_traces(textinfo="percent+label", insidetextorientation="tangential")
-            .update_layout(legend_title="Pitch Type")
+            .update_traces(textinfo="percent+label")
         )
 
         pitch_type_scatter = px.scatter(
@@ -185,7 +184,7 @@ def update_output_div(
             hover_data=["Result of Pitch", "Play by Play"],
             title=f"Box Plot of {first_name} {last_name}'s Pitch Speed Between {start_date} and {end_date}",
             template="plotly_dark"
-        ).update_traces(quartilemethod="exclusive")
+        )
 
         prev_clicks = prev_clicks + 1
 
@@ -195,7 +194,6 @@ def update_output_div(
             dcc.Graph(figure=pitch_type_scatter),
             dcc.Graph(figure=pitch_type_box),
         ]
-
 
 def get_data(first_name, last_name, start_date, end_date):
     try:
