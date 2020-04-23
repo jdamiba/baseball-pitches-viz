@@ -133,20 +133,6 @@ def update_output_div(
         SL = len(data[data["Pitch Type"] == "Slider"])
         FT = len(data[data["Pitch Type"] == "2-Seam Fastball"])
 
-        pitch_type_bar = px.bar(
-            y=[FF, KC, CU, CH, SL, FT],
-            x=[
-                "4-Seam Fastball",
-                "Knuckle Curve",
-                "Curveball",
-                "Changeup",
-                "Slider",
-                "2-Seam Fastball",
-            ],
-            title=f"Bar Chart of {first_name} {last_name}'s Pitch Selection Between {start_date} and {end_date}",
-            template="plotly_dark"
-        ).update_layout(xaxis_title="Pitch Type", yaxis_title="Count")
-
         pitch_type_pie = (
             px.pie(
                 values=[FF, KC, CU, CH, SL, FT],
